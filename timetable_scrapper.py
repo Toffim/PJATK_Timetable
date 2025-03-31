@@ -5,6 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
+import json
 import time
 
 driver = webdriver.Chrome()
@@ -35,6 +36,9 @@ WebDriverWait(driver, 10).until(
     EC.url_contains("TwojPlan.aspx")
 )
 
+# Create a list to store extracted lesson data
+lesson_data = []
+
 # Loop through lesson buttons in the timetable
 try:
     for i in range(25):
@@ -42,8 +46,10 @@ try:
         lessonElement = driver.find_element(By.ID, idLesson)
 
         # Lesson Name
+        lessonDescElementText = "None"
         try:
-            lessonDesc = lessonElement.find_element(By.CLASS_NAME, "rsAptContent")
+            lessonDescElement = lessonElement.find_element(By.CLASS_NAME, "rsAptContent")
+            lessonDescElementText = lessonDescElement.text
             # print(f"Lesson {i} text: {lessonDesc.text}") # Here we got lesson's description, e.g. "TPO wykład s. Y s. 500"
         except NoSuchElementException:
             print("Lesson description not found with lesson id: " + str(i))
@@ -55,8 +61,13 @@ try:
             EC.visibility_of_element_located((By.ID, "ctl00_ContentPlaceHolder1_DedykowanyPlanStudenta_RadToolTipManager1RTMPanel"))
         )
 
-        print(hoverWindow.text)
-        print("\n")
+        # Save tooltip's information to the table
+        lesson_info = hoverWindow.text.strip()
+        lesson_data.append({
+            "id": i,
+            "description": lessonDescElementText,
+            "info": lesson_info
+        })
 
         # Move cursor away to dismiss hover, I used a trick here, so I'm clicking "Today/Dziś" to refresh page
         # It's because PJATK's timetable has very badly coded tooltips...
@@ -68,3 +79,12 @@ try:
         time.sleep(1)
 except NoSuchElementException:
     print("Lesson not found with id: " + str(i))
+
+# Save the extracted data to a JSON file
+with open("lessons.json", "w", encoding="utf-8") as json_file:
+    json.dump(lesson_data, json_file, ensure_ascii=False, indent=4)
+
+print("Lesson data has been saved to lessons.json")
+
+# Close the driver
+driver.quit()
