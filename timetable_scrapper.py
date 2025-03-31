@@ -63,9 +63,17 @@ def parse_lesson_info(raw_info):
             except ValueError:
                 info["date"] = date_str
         elif "Godz. rozpoczęcia:" in line:
-            info["startTime"] = line.split(":")[1].strip()
+            time_str = line.split(":", 1)[1].strip()
+            try:
+                info["startTime"] = datetime.strptime(time_str, "%H:%M:%S").strftime("%H:%M")
+            except ValueError:
+                info["startTime"] = time_str
         elif "Godz. zakończenia:" in line:
-            info["endTime"] = line.split(":")[1].strip()
+            time_str = line.split(":", 1)[1].strip()
+            try:
+                info["endTime"] = datetime.strptime(time_str, "%H:%M:%S").strftime("%H:%M")
+            except ValueError:
+                info["endTime"] = time_str
         elif "Sala:" in line:
             info["room"] = line.split(":")[1].strip()
         elif "Dydaktycy:" in line:
